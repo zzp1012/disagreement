@@ -10,3 +10,5 @@ model/
 !src/model/
 # ignore .vscode
 .vscode/
+# ignore .sh
+*.sh
