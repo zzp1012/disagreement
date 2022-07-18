@@ -1,20 +1,23 @@
 import torch.nn as nn
 
 # import internal libs
-from utils import get_logger
+from utils import get_logger, set_seed
 
 def prepare_model(model_name: str,
-                  dataset: str) -> nn.Module:
+                  dataset: str,
+                  ini_seed: int = 0) -> nn.Module:
     """prepare the random initialized model according to the name.
 
     Args:
         model_name (str): the model name
         dataset (str): the dataset name
-        bn_type (str): the Batch normalization type
+        ini_seed (int): the initialization seed
 
     Return:
         the model
     """
+    # set the seed
+    set_seed(ini_seed)
     logger = get_logger(__name__)
     logger.info(f"prepare the {model_name} model for dataset {dataset}")
     if dataset == "cifar10":

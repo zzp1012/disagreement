@@ -21,8 +21,6 @@ def add_args() -> argparse.Namespace:
     ## the basic setting of exp
     parser.add_argument('--device', default=0, type=int,
                         help="set the device.")
-    parser.add_argument("--seed", default=0, type=int,
-                        help="set the random seed.")
     parser.add_argument("--save_root", default="../outs/tmp/", type=str,
                         help='the path of saving results.')
     parser.add_argument("--resume_path", default=None, type=str,
@@ -31,8 +29,8 @@ def add_args() -> argparse.Namespace:
                         help='the dataset name.')
     parser.add_argument("--model", default="vgg11", type=str,
                         help='the model name.')
-    parser.add_argument('--epochs', default=100, type=int,
-                        help="set epoch number")
+    parser.add_argument('--iters', default=1000, type=int,
+                        help="set iteration number")
     parser.add_argument("--lr", default=0.01, type=float,
                         help="set the learning rate.")
     parser.add_argument("--bs", default=128, type=int,
@@ -40,7 +38,16 @@ def add_args() -> argparse.Namespace:
     parser.add_argument("--wd", default=0., type=float,
                         help="set the weight decay")
     parser.add_argument("--momentum", default=0., type=float,
-                        help="set the momentum rate")    
+                        help="set the momentum rate")
+    # set the multiple seed
+    parser.add_argument("--ini_seed", default=0, type=int,
+                        help="set the seed for model parameter initialization.")
+    parser.add_argument("--fir_seed", default=0, type=int,
+                        help="set the seed for the first phase.")
+    parser.add_argument("--sec_seed", default=0, type=int,
+                        help="set the seed for the second phase.")
+    parser.add_argument("--midpoint", default=100, type=int,
+                        help="set the midpoint.")
     # set if using debug mod
     parser.add_argument("-v", "--verbose", action="store_true", dest="verbose",
                         help="enable debug info output.")
@@ -52,14 +59,13 @@ def add_args() -> argparse.Namespace:
     # set the save_path
     exp_name = "-".join([DATE, 
                          MOMENT,
-                         f"seed{args.seed}",
                          f"{args.dataset}",
                          f"{args.model}",
-                         f"epochs{args.epochs}",
+                         f"iters{args.iters}",
                          f"lr{args.lr}",
                          f"bs{args.bs}",
-                         f"wd{args.wd}",
-                         f"momentum{args.momentum}"])
+                         f"seed{args.ini_seed}+{args.fir_seed}+{args.sec_seed}",
+                         f"midpoint{args.midpoint}",])
     args.save_path = os.path.join(args.save_root, exp_name)
     if not os.path.exists(args.save_path):
         os.makedirs(args.save_path)
@@ -74,7 +80,7 @@ def main():
     # get the logger
     logger = get_logger(__name__, args.verbose)
     # set the seed
-    set_seed(args.seed)
+    set_seed(args.ini_seed)
     # set the device
     args.device = set_device(args.device)
 
@@ -93,7 +99,7 @@ def main():
 
     # prepare the model
     logger.info("#########preparing model....")
-    model = prepare_model(args.model, args.dataset)
+    model = prepare_model(args.model, args.dataset, args.ini_seed)
     if args.resume_path:
         logger.info(f"load the pretrained model from {args.resume_path}")
         model.load_state_dict(torch.load(args.resume_path))
@@ -106,12 +112,14 @@ def main():
           model = model,
           trainset = trainset,
           testset = testset,
-          epochs = args.epochs,
+          iters = args.iters,
           lr = args.lr,
           batch_size = args.bs,
           weight_decay = args.wd,
           momentum = args.momentum,
-          seed = args.seed)
+          fir_seed = args.fir_seed,
+          sec_seed = args.sec_seed,
+          midpoint = args.midpoint,)
 
 if __name__ == "__main__":
     main()
