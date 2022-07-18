@@ -172,7 +172,7 @@ def train(save_path: str,
                 test_loss: {test_loss}, test_acc: {test_acc}")
 
         # save the results
-        if itr % 100 == 0 or itr == iters:
+        if itr % 1000 == 0 or itr == iters:
             torch.save(model.state_dict(), 
                        os.path.join(save_path, f"model_itr{itr}.pt"))
             res_df = pd.DataFrame.from_dict(total_res_dict)
